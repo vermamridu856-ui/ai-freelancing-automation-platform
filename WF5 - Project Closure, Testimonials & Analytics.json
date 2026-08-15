@@ -1,0 +1,742 @@
+{
+  "name": "WF5 - Project Closure, Testimonials & Analytics",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        -576
+      ],
+      "id": "2aba1e28-31f0-4e07-b0cd-c44f79853132",
+      "name": "Weekly Schedule"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8hyVZCe9htABDu8r",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/8hyVZCe9htABDu8r"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "keyValue": "active"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        -480
+      ],
+      "id": "7f25452a-1ce1-43bb-9e55-62a76cfa91f9",
+      "name": "Get Active Projects"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZOIgJIr883h4qsgw",
+          "mode": "list",
+          "cachedResultName": "Milestones",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/ZOIgJIr883h4qsgw"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "project_id",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        -480
+      ],
+      "id": "6824f12d-82d5-4c40-980d-f5391adae211",
+      "name": "Get Project Milestones"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Groups milestones by project_id, checks if every one is \"completed\"\nconst items = $input.all();\n\n// Group milestones by project_id\nconst grouped = {};\nfor (const item of items) {\n  const pid = item.json.project_id;\n  if (!grouped[pid]) grouped[pid] = [];\n  grouped[pid].push(item.json);\n}\n\nconst results = [];\nfor (const projectId in grouped) {\n  const milestones = grouped[projectId];\n  const allComplete = milestones.every(m => m.status === 'completed');\n  if (allComplete) {\n    results.push({ json: { project_id: Number(projectId) } });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        -480
+      ],
+      "id": "1f2a8d88-4589-4014-bb76-43d5c115c100",
+      "name": "Check All Milestones Complete"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8hyVZCe9htABDu8r",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/8hyVZCe9htABDu8r"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.project_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "closed"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_id",
+              "displayName": "client_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "total_value",
+              "displayName": "total_value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        -480
+      ],
+      "id": "15732375-34ca-4ecb-8264-3d5fa31b8753",
+      "name": "Update Project Status"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8hyVZCe9htABDu8r",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/8hyVZCe9htABDu8r"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        -480
+      ],
+      "id": "06942815-dfd9-4abe-92e8-273547229967",
+      "name": "Get Project Details for Testimonial"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "gwFVsxVvyKRH0YE1",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/gwFVsxVvyKRH0YE1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.client_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        -480
+      ],
+      "id": "e5b7b244-01a1-46f6-ad9a-759dc3a38aff",
+      "name": "Get Client for Testimonial"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "o0fHjo2HrwPNLmmP",
+          "mode": "list",
+          "cachedResultName": "Testimonials",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/o0fHjo2HrwPNLmmP"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Get Project Details for Testimonial').first().json.id }}",
+            "client_id": "={{ $json.id }}",
+            "status": "requested",
+            "requested_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "project_id",
+              "displayName": "project_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_id",
+              "displayName": "client_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "requested_at",
+              "displayName": "requested_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        -480
+      ],
+      "id": "78038deb-2891-4c5a-8159-11b8a20e06c5",
+      "name": "Insert Testimonial Request"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get Client for Testimonial').first().json.email }}",
+        "subject": "={{ \"Thank you! - Project Complete\" }}",
+        "emailType": "text",
+        "message": "={{ \"Hi \" + $('Get Client for Testimonial').first().json.name + \",\\n\\nI'm thrilled to let you know your project has been completed! It was a pleasure working with you.\\n\\nIf you have a moment, I'd really appreciate a short testimonial about your experience — it helps a lot as I continue growing my freelance business.\\n\\nFeel free to just reply to this email with a few sentences whenever convenient.\\n\\nThank you again!\\n\\nBest regards\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1744,
+        -480
+      ],
+      "id": "de0e9dde-4c45-4f28-8f4e-5f0737b114f9",
+      "name": "Send Testimonial Request",
+      "webhookId": "9e354680-e5ff-4409-a15f-d7648884c686",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jtDCZiD3ATHM4cvf",
+          "name": "Gmail - Freelance Capstone"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        -672
+      ],
+      "id": "bedc524d-cbe7-4bcf-9914-edd34f132ef5",
+      "name": "Get All Leads for Analytics"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8hyVZCe9htABDu8r",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/8hyVZCe9htABDu8r"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        -672
+      ],
+      "id": "a6b9efa5-ecfc-46ac-979c-874608b16211",
+      "name": "Get All Projects for Analytics"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "o9wlTnv4fyGt9ZSY",
+          "mode": "list",
+          "cachedResultName": "Invoices",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/o9wlTnv4fyGt9ZSY"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        -672
+      ],
+      "id": "bf297539-28f5-4436-a429-406381995fec",
+      "name": "Get All Invoices for Analytics"
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $('Get All Leads for Analytics').all().map(i => i.json);\nconst projects = $('Get All Projects for Analytics').all().map(i => i.json);\nconst invoices = $input.all().map(i => i.json); // this node's direct input = invoices\n\nconst totalLeads = leads.length;\nconst wonLeads = leads.filter(l => l.status === 'proposal_sent' || l.status === 'meeting_scheduled').length;\nconst conversionRate = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) + '%' : '0%';\n\nconst totalRevenue = invoices\n  .filter(inv => inv.status === 'paid')\n  .reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);\n\nconst closedProjects = projects.filter(p => p.status === 'closed').length;\nconst activeProjects = projects.filter(p => p.status === 'active').length;\n\nreturn [{\n  json: {\n    total_leads: totalLeads,\n    lead_conversion_rate: conversionRate,\n    total_revenue_collected: totalRevenue,\n    active_projects: activeProjects,\n    closed_projects: closedProjects,\n    computed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -672
+      ],
+      "id": "769b811d-676b-473d-bbb0-db1ce744e013",
+      "name": "Compute Analytics"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF5_Closure_Analytics",
+            "event_type": "analytics_summary",
+            "message": "={{ \"Leads: \" + $json.total_leads + \" | Conversion: \" + $json.lead_conversion_rate + \" | Revenue: $\" + $json.total_revenue_collected + \" | Active: \" + $json.active_projects + \" | Closed: \" + $json.closed_projects }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        -672
+      ],
+      "id": "4b887674-f5e0-4515-8a63-ff1ad7410d46",
+      "name": "Log Analytics Summary"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF5_Closure",
+            "event_type": "project_closed",
+            "related_id": "={{ $('Update Project Status').first().json.id }}",
+            "message": "={{ \"Project closed and testimonial requested\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        -480
+      ],
+      "id": "2d5387bf-8b93-4fb1-ad38-1bfbde864d8b",
+      "name": "Log Project Closed"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Weekly Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Active Projects",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get All Leads for Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Projects": {
+      "main": [
+        [
+          {
+            "node": "Get Project Milestones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Milestones": {
+      "main": [
+        [
+          {
+            "node": "Check All Milestones Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check All Milestones Complete": {
+      "main": [
+        [
+          {
+            "node": "Update Project Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project Status": {
+      "main": [
+        [
+          {
+            "node": "Get Project Details for Testimonial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Details for Testimonial": {
+      "main": [
+        [
+          {
+            "node": "Get Client for Testimonial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Client for Testimonial": {
+      "main": [
+        [
+          {
+            "node": "Insert Testimonial Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Testimonial Request": {
+      "main": [
+        [
+          {
+            "node": "Send Testimonial Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Invoices for Analytics": {
+      "main": [
+        [
+          {
+            "node": "Compute Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Projects for Analytics": {
+      "main": [
+        [
+          {
+            "node": "Get All Invoices for Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Leads for Analytics": {
+      "main": [
+        [
+          {
+            "node": "Get All Projects for Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Analytics": {
+      "main": [
+        [
+          {
+            "node": "Log Analytics Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Testimonial Request": {
+      "main": [
+        [
+          {
+            "node": "Log Project Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "aa35ac8f-d67a-48a7-a037-5e0e796de0df",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a04352794861a59be10e8a2be0b1ca12dd09bc7b8720b0d56770417db5d354fa"
+  },
+  "nodeGroups": [],
+  "id": "2XEz6BaWTROI1RLN",
+  "tags": [
+    {
+      "updatedAt": "2026-08-08T09:07:20.468Z",
+      "createdAt": "2026-08-08T09:07:20.468Z",
+      "id": "RhgdNTTkXqH46SmH",
+      "name": "CP1"
+    }
+  ]
+}

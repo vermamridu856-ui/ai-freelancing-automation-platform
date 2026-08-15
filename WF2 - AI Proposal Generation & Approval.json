@@ -1,0 +1,1054 @@
+{
+  "name": "WF2 - AI Proposal Generation & Approval",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-proposal",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "825a4355-b731-4c95-948c-dc3c61f89b71",
+      "name": "Receive Proposal Request",
+      "webhookId": "4dc19b50-7611-460a-b4c9-fbd6edca2746"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.body.lead_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c212bb29-8c8d-4808-92af-a397863afa77",
+      "name": "Get Lead"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dc1075ce-c504-4bdb-9efa-877cfb43ccd5",
+              "name": "prompt_text",
+              "value": "={{ \"You are a professional freelancer writing a personalized project proposal.\\n\\nClient Name: \" + $json.client_name + \"\\nProject Title: \" + $json.project_title + \"\\nProject Description: \" + $json.project_description + \"\\nBudget: $\" + $json.budget + \"\\nDeadline: \" + $json.deadline + \"\\nLead Source: \" + $json.source + \"\\n\\nWrite a professional proposal that includes:\\n1. A brief understanding of the client's problem\\n2. Your proposed solution and approach\\n3. Key deliverables\\n4. A realistic timeline based on the deadline\\n5. Pricing aligned with the stated budget\\n6. A clear call to action inviting the client to schedule a call\\n\\nKeep the tone confident, warm, and professional. Do not include placeholder brackets like [Your Name] - write it as if ready to send. Format it as plain text suitable for an email body, not markdown.\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        0
+      ],
+      "id": "1db20e41-5648-4590-ae92-f6bed9f143cc",
+      "name": "Build Gemini Prompt"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.prompt_text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "64640b0c-3cb1-41c0-b3b7-aee29d149953",
+      "name": "Generate Proposal",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6dw1TeIpU1kLbuXU",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "dRXo0lvnlT720wo8",
+          "mode": "list",
+          "cachedResultName": "Proposals",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/dRXo0lvnlT720wo8"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $('Get Lead').first().json.id }}",
+            "ai_draft_text": "={{ $json.content.parts[0].text }}",
+            "status": "pending_approval"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_draft_text",
+              "displayName": "ai_draft_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "final_text",
+              "displayName": "final_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "revision_notes",
+              "displayName": "revision_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "10fc92e9-ea18-406c-807b-6b960fe88a96",
+      "name": "Insert Proposal"
+    },
+    {
+      "parameters": {
+        "sendTo": "vermamridu856@gmail.com",
+        "subject": "={{ \"Review Proposal for \" + $('Get Lead').first().json.client_name + \" - \" + $('Get Lead').first().json.project_title }}",
+        "message": "={{ \"<h3>New AI-Generated Proposal Ready for Review</h3><p><b>Client:</b> \" + $('Get Lead').first().json.client_name + \"<br><b>Project:</b> \" + $('Get Lead').first().json.project_title + \"<br><b>Budget:</b> $\" + $('Get Lead').first().json.budget + \"</p><hr><pre style='white-space: pre-wrap; font-family: inherit;'>\" + $('Insert Proposal').first().json.ai_draft_text + \"</pre><hr><p><a href='http://localhost:5678/webhook/approve-proposal?proposal_id=\" + $('Insert Proposal').first().json.id + \"&decision=approved' style='padding:10px 20px;background:#2ecc71;color:white;text-decoration:none;border-radius:4px;'>✅ Approve & Send</a> &nbsp; <a href='http://localhost:5678/webhook/approve-proposal?proposal_id=\" + $('Insert Proposal').first().json.id + \"&decision=rejected' style='padding:10px 20px;background:#e74c3c;color:white;text-decoration:none;border-radius:4px;'>❌ Reject</a></p>\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "f5f3535f-af98-414a-ba55-f2654b14b017",
+      "name": "Send Approval Email",
+      "webhookId": "ae1ec495-baa4-4059-b50d-5f2c5a3feb3b",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jtDCZiD3ATHM4cvf",
+          "name": "Gmail - Freelance Capstone"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1920,
+        0
+      ],
+      "id": "08ce07de-259d-4c10-95ad-f15a7632491d",
+      "name": "Acknowledge Proposal Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bce919c1-30e2-4409-899a-3b9a7f5cd588",
+              "name": "status",
+              "value": "proposal_generated",
+              "type": "string"
+            },
+            {
+              "id": "71b469cd-9538-4360-9787-1bc95bca238d",
+              "name": "proposal_id",
+              "value": "={{ $('Insert Proposal').first().json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "a1d6abe8-6f70-4d31-a6eb-1f67bfec0227",
+              "name": "message",
+              "value": "Proposal generated and sent for approval",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "7bde7533-5476-4e39-85dd-ba98780cd1bf",
+      "name": "Build Acknowledge Response"
+    },
+    {
+      "parameters": {
+        "path": "approve-proposal",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        320
+      ],
+      "id": "5c6a0865-4942-4100-a163-82c24d5db856",
+      "name": "Receive Approval Response",
+      "webhookId": "d97483a9-49a8-49b4-952b-f7a5c52f1182"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "dRXo0lvnlT720wo8",
+          "mode": "list",
+          "cachedResultName": "Proposals",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/dRXo0lvnlT720wo8"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.query.proposal_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.query.decision === \"approved\" ? \"sent\" : \"needs_revision\" }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_draft_text",
+              "displayName": "ai_draft_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "final_text",
+              "displayName": "final_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "revision_notes",
+              "displayName": "revision_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        320
+      ],
+      "id": "ffadb749-d413-4c15-8e9e-d4366c7459b5",
+      "name": "Update Proposal Status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2711a682-b7de-4f36-843d-4e7e7b632fe5",
+              "leftValue": "={{ $('Receive Approval Response').first().json.query.decision }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        320
+      ],
+      "id": "48b0713c-4968-4838-9515-ed1dadbd72bd",
+      "name": "Check Decision"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        224
+      ],
+      "id": "bdeb99e3-1242-4066-8913-bd3f8b1cf014",
+      "name": "Get Client Info"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.client_email }}",
+        "subject": "={{ \"Project Proposal: \" + $json.project_title }}",
+        "emailType": "text",
+        "message": "={{ $('Update Proposal Status').first().json.ai_draft_text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        224
+      ],
+      "id": "ae3fee72-416f-49c1-937c-53e113f41c05",
+      "name": "Send Proposal to Client",
+      "webhookId": "f197fea2-5cd8-4aac-92c1-5e1f4ed724ff",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jtDCZiD3ATHM4cvf",
+          "name": "Gmail - Freelance Capstone"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get Client Info').first().json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "proposal_sent"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_email",
+              "displayName": "client_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "project_title",
+              "displayName": "project_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "project_description",
+              "displayName": "project_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "dedupe_hash",
+              "displayName": "dedupe_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "deadline",
+              "displayName": "deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        224
+      ],
+      "id": "5164756e-3f64-41f9-a250-b7d93d55879b",
+      "name": "Update Lead Status"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        320
+      ],
+      "id": "61ac56cd-9bb7-42be-88e4-986601afd1bc",
+      "name": "Build Approval Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html_response }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1792,
+        320
+      ],
+      "id": "620a6f71-17e5-48f7-bfc0-99dd8b344eb3",
+      "name": "Respond Approval Page"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF2_Proposal_Generation",
+            "event_type": "success",
+            "related_id": "={{ $json.id }}",
+            "message": "={{ \"Proposal generated for lead_id \" + $json.lead_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "2f8fa0b7-2db2-421e-8b24-10e604eefafb",
+      "name": "Log Proposal Generated"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF2_Proposal_Approval",
+            "event_type": "approved",
+            "related_id": "={{ $('Update Proposal Status').first().json.id }}",
+            "message": "Proposal approved and sent to client"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        224
+      ],
+      "id": "e4bb9d56-9d0b-4003-95dc-5237c054bba0",
+      "name": "Log Proposal Approved"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF2_Proposal_Approval",
+            "event_type": "rejected",
+            "related_id": "={{ $('Update Proposal Status').first().json.id }}",
+            "message": "Proposal rejected, marked for revision"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        416
+      ],
+      "id": "45dc2ac5-482c-463f-ad13-50ea8f084c45",
+      "name": "Log Proposal Rejected"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Proposal Request": {
+      "main": [
+        [
+          {
+            "node": "Get Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lead": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Proposal": {
+      "main": [
+        [
+          {
+            "node": "Insert Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Proposal": {
+      "main": [
+        [
+          {
+            "node": "Log Proposal Generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Approval Email": {
+      "main": [
+        [
+          {
+            "node": "Build Acknowledge Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Acknowledge Response": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge Proposal Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Approval Response": {
+      "main": [
+        [
+          {
+            "node": "Update Proposal Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Proposal Status": {
+      "main": [
+        [
+          {
+            "node": "Check Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Decision": {
+      "main": [
+        [
+          {
+            "node": "Get Client Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Proposal Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Client Info": {
+      "main": [
+        [
+          {
+            "node": "Send Proposal to Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Proposal to Client": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Status": {
+      "main": [
+        [
+          {
+            "node": "Log Proposal Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Proposal Generated": {
+      "main": [
+        [
+          {
+            "node": "Send Approval Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Proposal Approved": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Proposal Rejected": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8019abcd-8d40-42cc-95b1-00a4aec46ce2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a04352794861a59be10e8a2be0b1ca12dd09bc7b8720b0d56770417db5d354fa"
+  },
+  "nodeGroups": [],
+  "id": "syMoXuTINU33MXmo",
+  "tags": [
+    {
+      "updatedAt": "2026-08-08T09:07:20.468Z",
+      "createdAt": "2026-08-08T09:07:20.468Z",
+      "id": "RhgdNTTkXqH46SmH",
+      "name": "CP1"
+    }
+  ]
+}

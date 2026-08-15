@@ -1,0 +1,740 @@
+{
+  "name": "WF4 - Milestone Tracking & Invoicing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "14522a27-15ec-44d5-a6b4-332db12fbecb",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZOIgJIr883h4qsgw",
+          "mode": "list",
+          "cachedResultName": "Milestones",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/ZOIgJIr883h4qsgw"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "keyValue": "completed"
+            },
+            {
+              "keyName": "invoiced",
+              "condition": "isFalse"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        96
+      ],
+      "id": "f0c8fa8a-e204-4aa8-aa31-223245b12b86",
+      "name": "Get Uninvoiced Completed Milestones"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "o9wlTnv4fyGt9ZSY",
+          "mode": "list",
+          "cachedResultName": "Invoices",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/o9wlTnv4fyGt9ZSY"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $json.project_id }}",
+            "milestone_id": "={{ $json.id }}",
+            "amount": "={{ $json.amount }}",
+            "due_date": "={{ $now.plus({ days: 14 }).toISO() }}",
+            "status": "unpaid",
+            "reminder_count": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "project_id",
+              "displayName": "project_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "milestone_id",
+              "displayName": "milestone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reminder_count",
+              "displayName": "reminder_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        96
+      ],
+      "id": "1d8d8b37-0db4-4dab-a20b-91f4f4ae0e42",
+      "name": "Generate Invoice"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZOIgJIr883h4qsgw",
+          "mode": "list",
+          "cachedResultName": "Milestones",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/ZOIgJIr883h4qsgw"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get Uninvoiced Completed Milestones').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "invoiced": true
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "project_id",
+              "displayName": "project_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "invoiced",
+              "displayName": "invoiced",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        96
+      ],
+      "id": "96fbf6b5-f131-4cb7-afa1-2961e673f28c",
+      "name": "Mark Milestone Invoiced"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "o9wlTnv4fyGt9ZSY",
+          "mode": "list",
+          "cachedResultName": "Invoices",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/o9wlTnv4fyGt9ZSY"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "keyValue": "unpaid"
+            },
+            {
+              "keyName": "due_date",
+              "condition": "lt",
+              "keyValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "81216c1e-0371-4485-8615-673aaa1ef0cc",
+      "name": "Get Overdue Invoices"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ \"Payment Reminder: Invoice Overdue\" }}",
+        "message": "={{ \"Hi \" + $json.name + \",\\n\\nThis is a friendly reminder that an invoice for $\" + $('Get Overdue Invoices').item.json.amount + \" is now overdue.\\n\\nPlease let me know if you have any questions or need to arrange payment.\\n\\nThanks!\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "f24c11a8-377e-480d-8121-278f245cfdeb",
+      "name": "Send Payment Reminder",
+      "webhookId": "dcc10eb3-f633-48a2-9961-65f10f4c6667",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jtDCZiD3ATHM4cvf",
+          "name": "Gmail - Freelance Capstone"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8hyVZCe9htABDu8r",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/8hyVZCe9htABDu8r"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.project_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "0612f511-f484-49aa-ba4f-3be360119c00",
+      "name": "Get Project for Invoice"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "gwFVsxVvyKRH0YE1",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/gwFVsxVvyKRH0YE1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.client_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "4deb7958-5f21-43d4-b06b-afe631acf9b3",
+      "name": "Get Client for Invoice"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "o9wlTnv4fyGt9ZSY",
+          "mode": "list",
+          "cachedResultName": "Invoices",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/o9wlTnv4fyGt9ZSY"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get Overdue Invoices').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "reminder_count": "={{ $('Get Overdue Invoices').item.json.reminder_count + 1 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "project_id",
+              "displayName": "project_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "milestone_id",
+              "displayName": "milestone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reminder_count",
+              "displayName": "reminder_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        -96
+      ],
+      "id": "8c06e01c-e28f-463f-bf09-ce97bc38d49b",
+      "name": "Increment Reminder Count"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF4_Invoicing",
+            "event_type": "invoice_generated",
+            "related_id": "={{ $('Generate Invoice').item.json.id }}",
+            "message": "={{ \"Invoice generated for milestone_id \" + $('Generate Invoice').item.json.milestone_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        96
+      ],
+      "id": "e6137fa8-0d63-486b-9e91-2ef982bfc7ed",
+      "name": "Log Invoice Generated"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF4_Invoicing",
+            "event_type": "reminder_sent",
+            "related_id": "={{ $('Get Overdue Invoices').item.json.id }}",
+            "message": "={{ \"Payment reminder sent for invoice_id \" + $('Get Overdue Invoices').item.json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        -96
+      ],
+      "id": "ecf2810c-9fb1-4b99-9b97-8cb97f46af4e",
+      "name": "Log Payment Reminder Sent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Uninvoiced Completed Milestones",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Overdue Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Uninvoiced Completed Milestones": {
+      "main": [
+        [
+          {
+            "node": "Generate Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Invoice": {
+      "main": [
+        [
+          {
+            "node": "Mark Milestone Invoiced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Milestone Invoiced": {
+      "main": [
+        [
+          {
+            "node": "Log Invoice Generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Overdue Invoices": {
+      "main": [
+        [
+          {
+            "node": "Get Project for Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project for Invoice": {
+      "main": [
+        [
+          {
+            "node": "Get Client for Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Client for Invoice": {
+      "main": [
+        [
+          {
+            "node": "Send Payment Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Payment Reminder": {
+      "main": [
+        [
+          {
+            "node": "Increment Reminder Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Reminder Count": {
+      "main": [
+        [
+          {
+            "node": "Log Payment Reminder Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bf69cd80-1f8a-4dbf-891c-6f2f632dbf0d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a04352794861a59be10e8a2be0b1ca12dd09bc7b8720b0d56770417db5d354fa"
+  },
+  "nodeGroups": [],
+  "id": "kHV3DlpMOsnKlKOC",
+  "tags": [
+    {
+      "updatedAt": "2026-08-08T09:07:20.468Z",
+      "createdAt": "2026-08-08T09:07:20.468Z",
+      "id": "RhgdNTTkXqH46SmH",
+      "name": "CP1"
+    }
+  ]
+}

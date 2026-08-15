@@ -1,0 +1,604 @@
+{
+  "name": "WF3 - Meeting Scheduling & Client Management",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Schedule a Meeting",
+        "formDescription": "Log a client's meeting request",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Lead ID",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Proposed Time",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Client Message",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "b756b63e-7cab-40a1-b83e-3c25588d2be1",
+      "name": "Meeting Request Form",
+      "webhookId": "427e61c0-7ee0-43f2-9d51-6e3e9c5968da"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json['Lead ID'] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "7bf067fd-d9ad-44f1-91ae-0a50a6b62fcb",
+      "name": "Get Lead for Meeting"
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "gwFVsxVvyKRH0YE1",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/gwFVsxVvyKRH0YE1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "keyValue": "={{ $json.client_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        -112
+      ],
+      "id": "8397289c-face-46fe-8b59-c1aa43124eb5",
+      "name": "Check Client Exists"
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "gwFVsxVvyKRH0YE1",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/gwFVsxVvyKRH0YE1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "keyValue": "={{ $json.client_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        80
+      ],
+      "id": "2e8490d1-dffd-46e9-965c-fdeaa09e21a8",
+      "name": "Client Does Not Exist"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "gwFVsxVvyKRH0YE1",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/gwFVsxVvyKRH0YE1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $json.client_name }}",
+            "email": "={{ $json.client_email }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        80
+      ],
+      "id": "561b7ba1-6623-4501-b0d4-11f6226dd1ee",
+      "name": "Insert New Client"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "gBAI2CWlGudTyUKK",
+          "mode": "list",
+          "cachedResultName": "Meetings",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/gBAI2CWlGudTyUKK"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $('Get Lead for Meeting').first().json.id }}",
+            "scheduled_time": "={{ $('Meeting Request Form').first().json['Proposed Time'] }}",
+            "status": "requested",
+            "client_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_id",
+              "displayName": "client_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "scheduled_time",
+              "displayName": "scheduled_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        -32
+      ],
+      "id": "b168721e-b6ab-4f54-9780-491a3b49e0ba",
+      "name": "Insert Meeting"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get Lead for Meeting').first().json.client_email }}",
+        "subject": "={{ \"Meeting Confirmed - \" + $('Get Lead for Meeting').first().json.project_title }}",
+        "emailType": "text",
+        "message": "={{ \"Hi \" + $('Get Lead for Meeting').first().json.client_name + \",\\n\\nThanks for scheduling a meeting regarding \\\"\" + $('Get Lead for Meeting').first().json.project_title + \"\\\". I've noted your proposed time: \" + $('Meeting Request Form').first().json['Proposed Time'] + \".\\n\\nI'll confirm the exact time shortly, or feel free to reply with any scheduling constraints.\\n\\nLooking forward to speaking with you!\\n\\nBest regards\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        -32
+      ],
+      "id": "d667a207-2e7a-4d8d-9bd0-d384a54db00e",
+      "name": "Send Meeting Confirmation",
+      "webhookId": "f8a9ee38-0fcf-465d-8382-bec32a91068c",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jtDCZiD3ATHM4cvf",
+          "name": "Gmail - Freelance Capstone"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get Lead for Meeting').first().json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "meeting_scheduled"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_email",
+              "displayName": "client_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "project_title",
+              "displayName": "project_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "project_description",
+              "displayName": "project_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "dedupe_hash",
+              "displayName": "dedupe_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "deadline",
+              "displayName": "deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        -32
+      ],
+      "id": "13a6d054-9260-4e45-b2d4-1bb484ce8b1e",
+      "name": "Update Lead Status After Meeting"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF3_Meeting_Scheduling",
+            "event_type": "success",
+            "related_id": "={{ $('Insert Meeting').first().json.id }}",
+            "message": "={{ \"Meeting scheduled for lead_id \" + $('Get Lead for Meeting').first().json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        -32
+      ],
+      "id": "09ff8a10-ab27-4946-ab61-0d33dbf24fe6",
+      "name": "Log Meeting Scheduled"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Meeting Request Form": {
+      "main": [
+        [
+          {
+            "node": "Get Lead for Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lead for Meeting": {
+      "main": [
+        [
+          {
+            "node": "Check Client Exists",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Client Does Not Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Client Exists": {
+      "main": [
+        [
+          {
+            "node": "Insert Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Does Not Exist": {
+      "main": [
+        [
+          {
+            "node": "Insert New Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert New Client": {
+      "main": [
+        [
+          {
+            "node": "Insert Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Meeting": {
+      "main": [
+        [
+          {
+            "node": "Send Meeting Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Meeting Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Status After Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Status After Meeting": {
+      "main": [
+        [
+          {
+            "node": "Log Meeting Scheduled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "4895d138-8f82-4252-b06c-11ad46ca1093",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a04352794861a59be10e8a2be0b1ca12dd09bc7b8720b0d56770417db5d354fa"
+  },
+  "nodeGroups": [],
+  "id": "JFmBHvXZYWyHf1wX",
+  "tags": [
+    {
+      "updatedAt": "2026-08-08T09:07:20.468Z",
+      "createdAt": "2026-08-08T09:07:20.468Z",
+      "id": "RhgdNTTkXqH46SmH",
+      "name": "CP1"
+    }
+  ]
+}

@@ -1,0 +1,651 @@
+{
+  "name": "WF1 - Lead Intake & Discovery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        64
+      ],
+      "id": "f26f26f2-9ae4-41ed-9941-82d0a4fb3e7d",
+      "name": "Receive New Lead",
+      "webhookId": "43dd9575-ac40-4435-9cab-34c0209f5b00"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d5ee38df-d3f8-4145-964d-98665ff9504e",
+              "name": "client_name",
+              "value": "={{ $json.body.client_name }}",
+              "type": "string"
+            },
+            {
+              "id": "33ef2cf0-b7e3-44f1-b457-388f2ce7dd71",
+              "name": "client_email",
+              "value": "={{ $json.body.client_email.toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "e5c0d46b-60be-48e4-b3bc-04a46dea0fcc",
+              "name": "project_title",
+              "value": "={{ $json.body.project_title }}",
+              "type": "string"
+            },
+            {
+              "id": "b71819f4-c33a-4d6f-9559-9759f9db108d",
+              "name": "project_description",
+              "value": "={{ $json.body.project_description }}",
+              "type": "string"
+            },
+            {
+              "id": "a299f4f2-254f-4de5-9ba8-6223c796a4be",
+              "name": "budget",
+              "value": "={{ $json.body.budget }}",
+              "type": "number"
+            },
+            {
+              "id": "fd3777dd-04ec-491c-b94c-9b11fc519991",
+              "name": "deadline",
+              "value": "={{ $json.body.deadline }}",
+              "type": "string"
+            },
+            {
+              "id": "2d45dd46-05fd-4d7b-8a53-5e8dce0e6000",
+              "name": "source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        64
+      ],
+      "id": "52b3497c-ef67-4a8b-af9d-5e930d54afb3",
+      "name": "Normalize Lead Data"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Input: expects client_email and project_title on the current item\nconst email = ($input.item.json.client_email || '').toLowerCase().trim();\nconst title = ($input.item.json.project_title || '').toLowerCase().trim();\n\nconst raw = `${email}|${title}`;\n\n// Simple deterministic hash (no external crypto libs needed)\nlet hash = 0;\nfor (let i = 0; i < raw.length; i++) {\n  const char = raw.charCodeAt(i);\n  hash = (hash << 5) - hash + char;\n  hash |= 0; // convert to 32-bit integer\n}\n\nreturn {\n  ...$input.item.json,\n  dedupe_hash: `LEAD-${Math.abs(hash)}`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        64
+      ],
+      "id": "caa2d38e-7ae6-481e-a5c7-26099d67584c",
+      "name": "Compute Dedupe Hash"
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "dedupe_hash",
+              "keyValue": "={{ $json.dedupe_hash }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -32
+      ],
+      "id": "5391cc2c-11ce-4b17-ba8e-54e27a2e11a0",
+      "name": "Check Duplicate Lead"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF1_Lead_Intake",
+            "event_type": "duplicate_skipped",
+            "related_id": "={{ $json.id }}",
+            "message": "=Duplicate lead skipped for email {{ $json.client_email || $json.dedupe_hash }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        -32
+      ],
+      "id": "cf61e40d-78dd-4416-9c9b-cc781a4d1c6c",
+      "name": "Log Duplicate Skipped"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        -32
+      ],
+      "id": "865290c0-43b9-46ad-93c5-175078afbac4",
+      "name": "Respond Duplicate"
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "dedupe_hash",
+              "keyValue": "={{ $json.dedupe_hash }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        160
+      ],
+      "id": "0870e176-587e-4e19-8393-3eefca471c08",
+      "name": "Check New Lead"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "eTCAYPtrNVs1GACM",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/eTCAYPtrNVs1GACM"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "client_name": "={{ $json.client_name }}",
+            "client_email": "={{ $json.client_email }}",
+            "project_title": "={{ $json.project_title }}",
+            "project_description": "={{ $json.project_description }}",
+            "budget": "={{ $json.budget }}",
+            "deadline": "={{ $json.deadline }}",
+            "source": "={{ $json.source }}",
+            "status": "new",
+            "dedupe_hash": "={{ $json.dedupe_hash }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_email",
+              "displayName": "client_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "project_title",
+              "displayName": "project_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "project_description",
+              "displayName": "project_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "dedupe_hash",
+              "displayName": "dedupe_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "deadline",
+              "displayName": "deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        160
+      ],
+      "id": "c07adb0f-f8e9-4897-8b2f-f941bd509c5e",
+      "name": "Insert Lead"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tPj9D7eM1FngTuc5",
+          "mode": "list",
+          "cachedResultName": "Audit_Log",
+          "cachedResultUrl": "/projects/hcJWPAwd9yDsWIIA/datatables/tPj9D7eM1FngTuc5"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflow_name": "WF1_Lead_Intake",
+            "event_type": "success",
+            "related_id": "={{ $json.id }}",
+            "message": "=New lead inserted: {{ $('Insert Lead').item.json.client_name }} - {{ $('Insert Lead').item.json.project_title }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_id",
+              "displayName": "related_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        160
+      ],
+      "id": "329e3f8a-7c17-4842-bddd-c09199f9dbbc",
+      "name": "Log Lead Inserted"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1568,
+        160
+      ],
+      "id": "9af48ad8-073f-4735-af74-5a622bff9b88",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f15686f4-b8c0-43f5-9baa-ad73ba03184b",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "4595f932-a5b8-4152-971d-c54e2bad1b92",
+              "name": "lead_id",
+              "value": "={{ $json.related_id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        160
+      ],
+      "id": "13b814ac-c012-4028-bd78-f86a3e5dd069",
+      "name": "Build Success Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f15686f4-b8c0-43f5-9baa-ad73ba03184b",
+              "name": "status",
+              "value": "duplicate",
+              "type": "string"
+            },
+            {
+              "id": "4595f932-a5b8-4152-971d-c54e2bad1b92",
+              "name": "message",
+              "value": "=Lead already exists",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -32
+      ],
+      "id": "ad4125f6-c5b0-4d37-9a75-3ccfbd0808c4",
+      "name": "Build Duplicate Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive New Lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Compute Dedupe Hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Dedupe Hash": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Duplicate Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Duplicate Skipped": {
+      "main": [
+        [
+          {
+            "node": "Build Duplicate Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check New Lead": {
+      "main": [
+        [
+          {
+            "node": "Insert Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Lead Inserted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Lead Inserted": {
+      "main": [
+        [
+          {
+            "node": "Build Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Duplicate Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1a3b6cbf-4416-4867-96b3-a545af46cec3",
+  "meta": {
+    "instanceId": "a04352794861a59be10e8a2be0b1ca12dd09bc7b8720b0d56770417db5d354fa"
+  },
+  "nodeGroups": [],
+  "id": "aA8YlybFFuyO4zOQ",
+  "tags": [
+    {
+      "updatedAt": "2026-08-08T09:07:20.468Z",
+      "createdAt": "2026-08-08T09:07:20.468Z",
+      "id": "RhgdNTTkXqH46SmH",
+      "name": "CP1"
+    }
+  ]
+}
