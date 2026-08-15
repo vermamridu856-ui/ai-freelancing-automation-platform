@@ -154,4 +154,4 @@ freelance-automation-capstone/
 
 ## Author
 
-[Your name] — Summer School'26 N8N Capstone
+Mridu Verma — Summer School'26 N8N Capstone
